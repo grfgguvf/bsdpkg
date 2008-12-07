@@ -155,7 +155,7 @@ df_commit() {
  df_log Beginning: Transaction '@' "`date`"
  df_trans_begin
  sh -xe "$df_trans_file"
- if [ $? -eq 0 ]; then
+ if [ $? -ne 0 ]; then
   df_warn Part\(s\) of transaction failed. Intent log follows:
   cat "$df_trans_log_file"
   df_log Failed: Transaction 
