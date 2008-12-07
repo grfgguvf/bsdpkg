@@ -6,55 +6,39 @@ df_log_dir=/var/log/
 
 df_ver=0.0.4
 
-df_platform="`df_get_platform`"
-df_log_file="$df_log_dir"/dfpkg.log
-
-case "$1" in
- add|install)
-  shift
-  df_install "$@"
-  ;;
- remove|erase|delete|uninstall)
-  shift
-  df_uninstall "$@"
-  ;;
- commit|run|execute)
-  ;; 
- help|--help|-?)
-  echo DFPkg $df_ver usage:
-  echo
-  echo To install packages and their dependencies:
-  echo  dfpkg install PACKAGE1 PACKAGE2 ...
-  echo To uninstall packages, their no-longer-needed dependencies (where 
-  echo     supported), and packages that depend on them:
-  echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
-  echo
-  ;;
- platf|platform|get-platform)
-  echo "$df_platform"
-  ;;
-esac
-
 ###
 
-df_install() {
- df_log Date: "`date`"
- df_log
- for pkg in "$@"; do
-  df_log Installed: "$pkg"
- done
- df_log
- lowlevel_${df_platform}_install "$@"
+df_get_platform() {
+ platf="`uname`"
+ case "$platf" in
+  Linux)
+   if [ -e /etc/fedora-release ]; then
+    platf=yum
+   elif [ -e /etc/debian-version]; then
+    platf=Debian
+   fi
+   ;;
+  FreeBSD)
+   if [ -e /etc/debian-version ]; then ### This is for handling 
+                                       ### Debian/kFreeBSD [debports]     
+    platf=Debian
+   fi
+   ;;
+ esac
+ return "$platf"
 }
 
-df_uninstall() {
+df_log() {
+ touch "$df_log_file"
+ echo "$@" >> "$df_log_file"
+}
+
+df_log_date() {
  df_log Date: "`date`"
- df_log
- for pkg in "$@"; do
-  df_log Uninstalled: "$pkg"
- done
- df_log
- lowlevel_${df_platform}_uninstall "$@"
+}
+
+df_log_sep() {
+ df_log " "
 }
 
 ###
@@ -95,36 +79,54 @@ lowlevel_yum_uninstall() {
 
 ###
 
-df_get_platform() {
- platf="`uname`"
- case "$platf" in
-  Linux)
-   if [ -e /etc/fedora-release ]; then
-    platf=yum
-   elif [ -e /etc/debian-version]; then
-    platf=Debian
-   fi
-   ;;
-  FreeBSD)
-   if [ -e /etc/debian-version ]; then ### This is for handling 
-                                       ### Debian/kFreeBSD [debports]     
-    platf=Debian
-   fi
-   ;;
- esac
- return "$platf"
-}
-
-df_log() {
- touch "$df_log_file"
- echo "$@" >> "$df_log_file"
-}
-
-df_log_date() {
+df_install() {
  df_log Date: "`date`"
+ df_log
+ for pkg in "$@"; do
+  df_log Installed: "$pkg"
+ done
+ df_log
+ lowlevel_${df_platform}_install "$@"
 }
 
-df_log_sep() {
- df_log " "
+df_uninstall() {
+ df_log Date: "`date`"
+ df_log
+ for pkg in "$@"; do
+  df_log Uninstalled: "$pkg"
+ done
+ df_log
+ lowlevel_${df_platform}_uninstall "$@"
 }
+
+###
+
+df_platform="`df_get_platform`"
+df_log_file="$df_log_dir"/dfpkg.log
+
+case "$1" in
+ add|install)
+  shift
+  df_install "$@"
+  ;;
+ remove|erase|delete|uninstall)
+  shift
+  df_uninstall "$@"
+  ;;
+ commit|run|execute)
+  ;; 
+ help|--help|-?)
+  echo DFPkg $df_ver usage:
+  echo
+  echo To install packages and their dependencies:
+  echo  dfpkg install PACKAGE1 PACKAGE2 ...
+  echo To uninstall packages, their no-longer-needed dependencies \(where 
+  echo     supported\), and packages that depend on them:
+  echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
+  echo
+  ;;
+ platf|platform|get-platform)
+  echo "$df_platform"
+  ;;
+esac
 
