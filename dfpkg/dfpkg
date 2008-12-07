@@ -1,20 +1,33 @@
 #!/bin/sh
+###
+### DFPkg
+###
+### Tested only on Fedora 11-rawhide, currently.. Please test mainly on 
+### DragonFly BSD
+###
 
 ### Anticipated-to-be-distribution-customized variables:
-df_log_dir=/var/log/
-df_run_dir=/var/run/
+df_log_dir=/var/log/ #DEFAULT#
+df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.2.0 ### This is dfpkg's version, not that of DragonFly
+df_ver=0.2.2 ### This is dfpkg's version, not that of DragonFly
+
+
+
+
+
+
+
 
 ###
 
 df_warn() {
- echo '/!\' "$@" ### TODO: >2
+ echo '/!\' "$@" 1>&2
 }
 
 df_info() {
- echo '{i}' "$@" ### TODO: >2
+ echo '{i}' "$@" 1>&2
 }
 
 df_get_ts() {
@@ -88,6 +101,7 @@ lowlevel_FreeBSD_install() {
 }
 
 lowlevel_Debian_install() {
+ echo aptitude update
  echo aptitude -yR install "$@"
 }
 
@@ -149,9 +163,9 @@ df_trans_begin() {
 }
 
 df_trans_cleanup() {
- rm "$df_trans_log_file"
+ rm -f "$df_trans_log_file"
  touch "$df_trans_log_file" 
- rm "$df_trans_file"
+ rm -f "$df_trans_file"
  touch "$df_trans_file"
 }
 
@@ -168,6 +182,12 @@ df_commit() {
   df_log _Ending: Transaction
   df_info Transaction succeeded
  fi
+ df_trans_cleanup
+}
+
+df_cancel() {
+ df_info Cancelled the transaction. Intent log follows:
+ cat "$df_trans_log_file"
  df_trans_cleanup
 }
 
@@ -195,6 +215,14 @@ case "$1" in
   df_install "$@"
   df_commit
   ;;
+ update|upgrade)
+  if [ $# -eq 1 ]; then
+   df_fullupgrade ### TODO
+  else
+   shift
+   df_upgrade "$@" ### TODO
+  fi;
+  ;;
  remove|erase|delete|uninstall)
   shift
   df_uninstall "$@"
@@ -207,6 +235,9 @@ case "$1" in
  commit|run|execute|commit-now|run-now|execute-now)
   df_commit
   ;; 
+ cancel|cancel-now)
+  df_cancel
+  ;;
  help|--help|-?)
   echo DFPkg $df_ver usage:
   echo
@@ -219,6 +250,8 @@ case "$1" in
   echo NOTE: You have to actually run the transaction for the operations to 
   echo "    " be done:
   echo " " dfpkg commit
+  echo NOTE: To cancel a transaction:
+  echo " " dfpkg cancel
   echo For immediate operations you can use the -now version of commands:
   echo " " dfpkg install-now PACKAGE1 PACKAGE2 ...
   echo
@@ -227,4 +260,6 @@ case "$1" in
   echo Platform: "$df_platform"
   ;;
 esac
+
+: end
 
