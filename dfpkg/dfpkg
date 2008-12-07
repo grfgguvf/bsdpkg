@@ -5,12 +5,12 @@ df_log_dir=/var/log/
 df_run_dir=/var/run/
 ### 
 
-df_ver=0.1.6
+df_ver=0.1.7
 
 ###
 
 df_warn() {
- echo '/!\' "$@" >2
+ echo '/!\' "$@" ### TODO: >2
 }
 
 df_get_ts() {
@@ -198,14 +198,14 @@ case "$1" in
   echo DFPkg $df_ver usage:
   echo
   echo To install packages and their dependencies:
-  echo  dfpkg install PACKAGE1 PACKAGE2 ...
+  echo " " dfpkg install PACKAGE1 PACKAGE2 ...
   echo To uninstall packages, their no-longer-needed dependencies \(where 
-  echo     supported\), and packages that depend on them:
-  echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
+  echo "    " supported\), and packages that depend on them:
+  echo " " dfpkg uninstall PACKAGE1 PACKAGE2 ...
   echo
   echo NOTE: You have to actually run the transaction for the operations to 
-  echo     be done:
-  echo  dfpkg commit
+  echo "    " be done:
+  echo " " dfpkg commit
   echo
   ;;
  platf|platform|get-platform)
