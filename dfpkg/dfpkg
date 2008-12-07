@@ -11,7 +11,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.2.7 ### This is dfpkg's version, not that of DragonFly
+df_ver=0.2.8 ### This is dfpkg's version, not that of DragonFly
 
 
 
@@ -275,6 +275,15 @@ case "$1" in
    shift
    df_upgrade "$@" ### TODO
   fi;
+  ;;
+ update-now|upgrade-now)
+  if [ $# -eq 1 ]; then
+   df_fullupgrade 
+  else
+   shift
+   df_upgrade "$@" ### TODO
+  fi
+  df_commit
   ;;
  remove|erase|delete|uninstall)
   shift
