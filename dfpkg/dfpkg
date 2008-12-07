@@ -4,7 +4,7 @@
 df_log_dir=/var/log/
 ### 
 
-df_ver=0.0.4
+df_ver=0.1.0
 
 ###
 
