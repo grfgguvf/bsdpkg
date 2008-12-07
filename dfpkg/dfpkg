@@ -5,12 +5,16 @@ df_log_dir=/var/log/
 df_run_dir=/var/run/
 ### 
 
-df_ver=0.1.7
+df_ver=0.2.0 ### This is dfpkg's version, not that of DragonFly
 
 ###
 
 df_warn() {
  echo '/!\' "$@" ### TODO: >2
+}
+
+df_info() {
+ echo '{i}' "$@" ### TODO: >2
 }
 
 df_get_ts() {
@@ -118,8 +122,8 @@ df_install() {
  done
  df_trans_log_sep
  lowlevel_${df_platform}_install "$@" >> "$df_trans_file"
- df_warn Operation\(s\) added to transaction, to run it execute:
- df_warn " " dfpkg commit
+ df_info Operation\(s\) added to transaction, to run it execute:
+ df_info " " dfpkg commit
 }
 
 df_uninstall() {
@@ -129,8 +133,8 @@ df_uninstall() {
  done
  df_trans_log_sep
  lowlevel_${df_platform}_uninstall "$@" >> "$df_trans_file"
- df_warn Operation\(s\) added to transaction, to run it execute:
- df_warn " " dfpkg commit
+ df_info Operation\(s\) added to transaction, to run it execute:
+ df_info " " dfpkg commit
 }
 
 ###
@@ -162,13 +166,12 @@ df_commit() {
  else
   cat "$df_trans_log_file" >> "$df_log_file"
   df_log _Ending: Transaction
+  df_info Transaction succeeded
  fi
  df_trans_cleanup
 }
 
 ###
-
-df_warn Testando... Un\! Dos\! Tres\! ### DEBUG
 
 df_platform="`df_get_platform`"
 
@@ -187,11 +190,21 @@ case "$1" in
   shift
   df_install "$@"
   ;;
+ add-now|install-now)
+  shift
+  df_install "$@"
+  df_commit
+  ;;
  remove|erase|delete|uninstall)
   shift
   df_uninstall "$@"
   ;;
- commit|run|execute)
+ remove-now|erase-now|delete-now|uninstall-now)
+  shift
+  df_uninstall "$@"
+  df_commit
+  ;;
+ commit|run|execute|commit-now|run-now|execute-now)
   df_commit
   ;; 
  help|--help|-?)
@@ -206,6 +219,8 @@ case "$1" in
   echo NOTE: You have to actually run the transaction for the operations to 
   echo "    " be done:
   echo " " dfpkg commit
+  echo For immediate operations you can use the -now version of commands:
+  echo " " dfpkg install-now PACKAGE1 PACKAGE2 ...
   echo
   ;;
  platf|platform|get-platform)
