@@ -2,25 +2,30 @@
 
 ### Anticipated-to-be-distribution-customized variables:
 df_log_dir=/var/log/
+df_run_dir=/var/run/
 ### 
 
-df_ver=0.1.0
+df_ver=0.1.6
 
 ###
+
+df_warn() {
+ echo '/!\' "$@" >2
+}
+
+df_get_ts() {
+ true ### TODO: POSIX date(1) does not support neither %s nor %N
+}
 
 df_get_platform() {
  platf="`uname`"
  case "$platf" in
-  Linux)
+  Linux|Hurd|FreeBSD) ### Always remember that things like Debian/kFreeBSD 
+                      ### [debports] exist
    if [ -e /etc/fedora-release ]; then
     platf=yum
-   elif [ -e /etc/debian-version]; then
-    platf=Debian
-   fi
-   ;;
-  FreeBSD)
-   if [ -e /etc/debian-version ]; then ### This is for handling 
-                                       ### Debian/kFreeBSD [debports]     
+   elif [ -e /etc/debian-version ]; then ### This might supposedly fail on 
+                                         ### >=etch installations
     platf=Debian
    fi
    ;;
@@ -28,81 +33,154 @@ df_get_platform() {
  echo "$platf"
 }
 
+###
+
+df_log_init() {
+ touch "$df_log_file"
+}
+
 df_log() {
  touch "$df_log_file"
  echo "$@" >> "$df_log_file"
-}
-
-df_log_date() {
- df_log Date: "`date`"
 }
 
 df_log_sep() {
  df_log " "
 }
 
+df_log_date() {
+ df_log Date: "`date`"
+ df_log_sep
+}
+
+###
+
+df_trans_log_init() {
+ touch "$df_trans_log_file"
+}
+
+df_trans_log() {
+ touch "$df_trans_log_file"
+ echo " " "$@" >> "$df_trans_log_file"
+}
+
+df_trans_log_sep() {
+ df_trans_log " "
+}
+
+df_trans_log_date() {
+ df_trans_log Date: "`date`"
+ df_trans_log_sep
+}
+
 ###
 
 lowlevel_DragonFly_install() {
- pkg_radd  "$@"
+ echo pkg_radd  "$@"
 }
 
 lowlevel_FreeBSD_install() {
- pkg_add -r "$@"
+ echo pkg_add -r "$@"
 }
 
 lowlevel_Debian_install() {
- aptitude -yR install "$@"
+ echo aptitude -yR install "$@"
 }
 
 lowlevel_yum_install() {
- yum -y install "$@"
+ echo yum -y install "$@"
 }
 
 ###
 
 lowlevel_DragonFly_uninstall() {
- pkg_delete -rR "$@"
+ echo pkg_delete -rR "$@"
 }
 
 lowlevel_FreeBSD_uninstall() {
- pkg_delete -r "$@"
+ echo pkg_delete -r "$@"
 }
 
 lowlevel_Debian_uninstall() {
- aptitude -y remove "$@"
+ echo aptitude -y remove "$@"
 }
 
 lowlevel_yum_uninstall() {
- yum -y remove "$@"
+ echo yum -y remove "$@"
 }
 
 ###
 
 df_install() {
- df_log Date: "`date`"
- df_log
+ df_trans_log_date
  for pkg in "$@"; do
-  df_log Installed: "$pkg"
+  df_trans_log Installed: "$pkg"
  done
- df_log
- lowlevel_${df_platform}_install "$@"
+ df_trans_log_sep
+ lowlevel_${df_platform}_install "$@" >> "$df_trans_file"
+ df_warn Operation\(s\) added to transaction, to run it execute:
+ df_warn " " dfpkg commit
 }
 
 df_uninstall() {
- df_log Date: "`date`"
- df_log
+ df_trans_log_date
  for pkg in "$@"; do
-  df_log Uninstalled: "$pkg"
+  df_trans_log Uninstalled: "$pkg"
  done
- df_log
- lowlevel_${df_platform}_uninstall "$@"
+ df_trans_log_sep
+ lowlevel_${df_platform}_uninstall "$@" >> "$df_trans_file"
+ df_warn Operation\(s\) added to transaction, to run it execute:
+ df_warn " " dfpkg commit
 }
 
 ###
 
+df_trans_init() {
+ mkdir -p "$df_trans_dir"
+ touch "$df_trans_file"
+}
+
+df_trans_begin() {
+ true ### TODO: Clone filesystem, etc
+}
+
+df_trans_cleanup() {
+ rm "$df_trans_log_file"
+ touch "$df_trans_log_file" 
+ rm "$df_trans_file"
+ touch "$df_trans_file"
+}
+
+df_commit() {
+ df_log Beginning: Transaction '@' "`date`"
+ df_trans_begin
+ sh -xe "$df_trans_file"
+ if [ $? -eq 0 ]; then
+  df_warn Part\(s\) of transaction failed. Intent log follows:
+  cat "$df_trans_log_file"
+  df_log Failed: Transaction 
+ else
+  cat "$df_trans_log_file" >> "$df_log_file"
+  df_log _Ending: Transaction
+ fi
+ df_trans_cleanup
+}
+
+###
+
+df_warn Testando... Un\! Dos\! Tres\! ### DEBUG
+
 df_platform="`df_get_platform`"
+
 df_log_file="$df_log_dir"/dfpkg.log
+df_log_init
+
+df_trans_dir="$df_run_dir"/dfpkg/trans/
+df_trans_file="$df_trans_dir"//curr.dftrans
+df_trans_init
+
+df_trans_log_file="$df_trans_dir"/curr.log
+df_trans_log_init
 
 case "$1" in
  add|install)
@@ -114,6 +192,7 @@ case "$1" in
   df_uninstall "$@"
   ;;
  commit|run|execute)
+  df_commit
   ;; 
  help|--help|-?)
   echo DFPkg $df_ver usage:
@@ -124,9 +203,13 @@ case "$1" in
   echo     supported\), and packages that depend on them:
   echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
   echo
+  echo NOTE: You have to actually run the transaction for the operations to 
+  echo     be done:
+  echo  dfpkg commit
+  echo
   ;;
  platf|platform|get-platform)
-  echo "$df_platform"
+  echo Platform: "$df_platform"
   ;;
 esac
 
