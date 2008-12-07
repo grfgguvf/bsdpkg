@@ -11,7 +11,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.2.2 ### This is dfpkg's version, not that of DragonFly
+df_ver=0.2.5 ### This is dfpkg's version, not that of DragonFly
 
 
 
@@ -32,6 +32,10 @@ df_info() {
 
 df_get_ts() {
  true ### TODO: POSIX date(1) does not support neither %s nor %N
+}
+
+df_get_date() {
+ date ### TODO
 }
 
 df_get_platform() {
@@ -62,12 +66,12 @@ df_log() {
 }
 
 df_log_sep() {
- df_log " "
+ df_warn df_log_sep\(\) used
+ true
 }
 
 df_log_date() {
- df_log Date: "`date`"
- df_log_sep
+ df_log Date: "`df_get_date`"
 }
 
 ###
@@ -78,16 +82,23 @@ df_trans_log_init() {
 
 df_trans_log() {
  touch "$df_trans_log_file"
- echo " " "$@" >> "$df_trans_log_file"
+ echo " $@" >> "$df_trans_log_file"
 }
 
 df_trans_log_sep() {
- df_trans_log " "
+ df_warn df_trans_log_sep\(\) used
+ true
 }
 
 df_trans_log_date() {
- df_trans_log Date: "`date`"
- df_trans_log_sep
+ df_trans_log Date: "`df_get_date`"
+}
+
+df_trans_log_commit() {
+ cat "$df_trans_log_file" \
+ | sed -e s/Install:/Installed:/g \
+ | sed -e s/Uninstall:/Uninstalled:/g \
+ >> "$df_log_file"
 }
 
 ###
@@ -132,23 +143,23 @@ lowlevel_yum_uninstall() {
 df_install() {
  df_trans_log_date
  for pkg in "$@"; do
-  df_trans_log Installed: "$pkg"
+  df_trans_log " "Install: "$pkg"
  done
  df_trans_log_sep
  lowlevel_${df_platform}_install "$@" >> "$df_trans_file"
  df_info Operation\(s\) added to transaction, to run it execute:
- df_info " " dfpkg commit
+ df_info " "dfpkg commit
 }
 
 df_uninstall() {
  df_trans_log_date
  for pkg in "$@"; do
-  df_trans_log Uninstalled: "$pkg"
+  df_trans_log " "Uninstall: "$pkg"
  done
  df_trans_log_sep
  lowlevel_${df_platform}_uninstall "$@" >> "$df_trans_file"
  df_info Operation\(s\) added to transaction, to run it execute:
- df_info " " dfpkg commit
+ df_info " "dfpkg commit
 }
 
 ###
@@ -170,7 +181,7 @@ df_trans_cleanup() {
 }
 
 df_commit() {
- df_log Beginning: Transaction '@' "`date`"
+ df_log Beginning: Transaction '@' "`df_get_date`"
  df_trans_begin
  sh -xe "$df_trans_file"
  if [ $? -ne 0 ]; then
@@ -178,8 +189,8 @@ df_commit() {
   cat "$df_trans_log_file"
   df_log Failed: Transaction 
  else
-  cat "$df_trans_log_file" >> "$df_log_file"
-  df_log _Ending: Transaction
+  df_trans_log_commit
+  df_log Succeeded: Transaction
   df_info Transaction succeeded
  fi
  df_trans_cleanup
@@ -242,23 +253,25 @@ case "$1" in
   echo DFPkg $df_ver usage:
   echo
   echo To install packages and their dependencies:
-  echo " " dfpkg install PACKAGE1 PACKAGE2 ...
+  echo " "dfpkg install PACKAGE1 PACKAGE2 ...
   echo To uninstall packages, their no-longer-needed dependencies \(where 
-  echo "    " supported\), and packages that depend on them:
-  echo " " dfpkg uninstall PACKAGE1 PACKAGE2 ...
+  echo "    "supported\), and packages that depend on them:
+  echo " "dfpkg uninstall PACKAGE1 PACKAGE2 ...
   echo
   echo NOTE: You have to actually run the transaction for the operations to 
-  echo "    " be done:
-  echo " " dfpkg commit
+  echo "    "be done:
+  echo " "dfpkg commit
   echo NOTE: To cancel a transaction:
-  echo " " dfpkg cancel
+  echo " "dfpkg cancel
   echo For immediate operations you can use the -now version of commands:
-  echo " " dfpkg install-now PACKAGE1 PACKAGE2 ...
+  echo " "dfpkg install-now PACKAGE1 PACKAGE2 ...
   echo
   ;;
  platf|platform|get-platform)
   echo Platform: "$df_platform"
   ;;
+ version|--version|get-version)
+  echo $df_ver
 esac
 
 : end
