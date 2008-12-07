@@ -4,12 +4,16 @@
 df_log_dir=/var/log/
 ### 
 
-df_ver=0.0.2
+df_ver=0.0.4
 
 df_platform="`df_get_platform`"
 df_log_file="$df_log_dir"/dfpkg.log
 
 case "$1" in
+ add|install)
+  shift
+  df_install "$@"
+  ;;
  remove|erase|delete|uninstall)
   shift
   df_uninstall "$@"
@@ -19,8 +23,10 @@ case "$1" in
  help|--help|-?)
   echo DFPkg $df_ver usage:
   echo
-  echo To uninstall packages, their no-longer-needed dependencies, and 
-  echo     packages that depend on them:
+  echo To install packages and their dependencies:
+  echo  dfpkg install PACKAGE1 PACKAGE2 ...
+  echo To uninstall packages, their no-longer-needed dependencies (where 
+  echo     supported), and packages that depend on them:
   echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
   echo
   ;;
@@ -29,13 +35,47 @@ case "$1" in
   ;;
 esac
 
+###
+
+df_install() {
+ df_log Date: "`date`"
+ df_log
+ for pkg in "$@"; do
+  df_log Installed: "$pkg"
+ done
+ df_log
+ lowlevel_${df_platform}_install "$@"
+}
+
 df_uninstall() {
  df_log Date: "`date`"
+ df_log
  for pkg in "$@"; do
   df_log Uninstalled: "$pkg"
  done
+ df_log
  lowlevel_${df_platform}_uninstall "$@"
 }
+
+###
+
+lowlevel_DragonFly_install() {
+ pkg_radd  "$@"
+}
+
+lowlevel_FreeBSD_install() {
+ pkg_add -r "$@"
+}
+
+lowlevel_Debian_install() {
+ aptitude -yR install "$@"
+}
+
+lowlevel_yum_install() {
+ yum -y install "$@"
+}
+
+###
 
 lowlevel_DragonFly_uninstall() {
  pkg_delete -rR "$@"
@@ -45,9 +85,15 @@ lowlevel_FreeBSD_uninstall() {
  pkg_delete -r "$@"
 }
 
+lowlevel_Debian_uninstall() {
+ aptitude -y remove "$@"
+}
+
 lowlevel_yum_uninstall() {
  yum -y remove "$@"
 }
+
+###
 
 df_get_platform() {
  platf="`uname`"
@@ -55,6 +101,8 @@ df_get_platform() {
   Linux)
    if [ -e /etc/fedora-release ]; then
     platf=yum
+   elif [ -e /etc/debian-version]; then
+    platf=Debian
    fi
    ;;
   FreeBSD)
@@ -70,5 +118,13 @@ df_get_platform() {
 df_log() {
  touch "$df_log_file"
  echo "$@" >> "$df_log_file"
+}
+
+df_log_date() {
+ df_log Date: "`date`"
+}
+
+df_log_sep() {
+ df_log " "
 }
 
