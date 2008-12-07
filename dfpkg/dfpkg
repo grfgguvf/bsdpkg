@@ -1,0 +1,49 @@
+#!/bin/sh
+
+df_ver=0.0.1
+
+df_platform="`df_get_platform`"
+
+case "$1" in
+ remove|erase|delete|uninstall)
+  shift
+  df_uninstall "$@"
+  ;;
+ commit|run|execute)
+  ;; 
+ help|--help|-?)
+  echo DFPkg $df_ver usage:
+  echo
+  echo To uninstall packages, their no-longer-needed dependencies, and 
+  echo     packages that depend on them:
+  echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
+  echo
+  ;;
+esac
+
+df_uninstall() {
+ for pkg in "$@"; do
+ done
+ lowlevel_${df_platform}_uninstall "$@"
+}
+
+lowlevel_DragonFly_uninstall() {
+ pkg_delete -rR "$@"
+}
+
+lowlevel_yum_uninstall() {
+ yum -y remove "$@"
+}
+
+df_get_platform() {
+ platf="`uname`"
+ case "$platf" in
+  Linux)
+   if [ -e /etc/fedora-release ]; then
+    platf=yum
+   fi
+   ;;
+ esac
+ return "$platf"
+}
+
