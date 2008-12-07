@@ -2,8 +2,8 @@
 ###
 ### DFPkg
 ###
-### Tested only on Fedora 11-rawhide, currently.. Please test mainly on 
-### DragonFly BSD
+### Tested only on Fedora 11-rawhide (bash 3.2, ksh 20080725, zsh 4.3.4), 
+### currently.. Please test, mainly on DragonFly BSD
 ###
 
 ### Anticipated-to-be-distribution-customized variables:
@@ -11,7 +11,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.2.5 ### This is dfpkg's version, not that of DragonFly
+df_ver=0.2.7 ### This is dfpkg's version, not that of DragonFly
 
 
 
@@ -35,7 +35,7 @@ df_get_ts() {
 }
 
 df_get_date() {
- date ### TODO
+ date
 }
 
 df_get_platform() {
@@ -98,6 +98,7 @@ df_trans_log_commit() {
  cat "$df_trans_log_file" \
  | sed -e s/Install:/Installed:/g \
  | sed -e s/Uninstall:/Uninstalled:/g \
+ | sed -e s/FullyUpgrade:/FullyUpgraded:/g \
  >> "$df_log_file"
 }
 
@@ -140,15 +141,41 @@ lowlevel_yum_uninstall() {
 
 ###
 
+lowlevel_DragonFly_fullupgrade() {
+ ### TODO: Upgrade the base-system, too
+ echo pkg_radd -uu '\*' ### TODO: Does pkgsrc pkg_add support wildcards?
+}
+
+lowlevel_FreeBSD_fullupgrade() {
+ echo freebsd-update fetch install
+ echo portsnap -I fetch update ### TODO: portsnap extract DBD?
+ ### TODO: Actually update packages (no standard way to do
+ ### this on FreeBSD!!)
+}
+
+lowlevel_Debian_fullupgrade() {
+ echo aptitude update
+ echo aptitude -yR full-upgrade 
+}
+
+lowlevel_yum_fullupgrade() {
+ echo yum -y upgrade
+}
+
+###
+
+df_commit_reminder() {
+ df_info Operation\(s\) added to transaction, to run it execute:
+ df_info " "dfpkg commit
+}
+
 df_install() {
  df_trans_log_date
  for pkg in "$@"; do
   df_trans_log " "Install: "$pkg"
  done
- df_trans_log_sep
  lowlevel_${df_platform}_install "$@" >> "$df_trans_file"
- df_info Operation\(s\) added to transaction, to run it execute:
- df_info " "dfpkg commit
+ df_commit_reminder
 }
 
 df_uninstall() {
@@ -156,10 +183,15 @@ df_uninstall() {
  for pkg in "$@"; do
   df_trans_log " "Uninstall: "$pkg"
  done
- df_trans_log_sep
  lowlevel_${df_platform}_uninstall "$@" >> "$df_trans_file"
- df_info Operation\(s\) added to transaction, to run it execute:
- df_info " "dfpkg commit
+ df_commit_reminder
+}
+
+df_fullupgrade() {
+ df_trans_log_date
+ df_trans_log " "FullyUpgrade: \*
+ lowlevel_${df_platform}_fullupgrade >> "$df_trans_file"
+ df_commit_reminder
 }
 
 ###
@@ -170,7 +202,7 @@ df_trans_init() {
 }
 
 df_trans_begin() {
- true ### TODO: Clone filesystem, etc
+ true ### TODO: Clone filesystem / Make snapshot / etc
 }
 
 df_trans_cleanup() {
@@ -180,17 +212,27 @@ df_trans_cleanup() {
  touch "$df_trans_file"
 }
 
+df_trans_end_ok() {
+ true ### TODO: Promote clone / Remove snapshot / etc
+}
+
+df_trans_end_fail() {
+ true ### TODO: Remove clone / Rollback to snapshot / etc
+}
+
 df_commit() {
  df_log Beginning: Transaction '@' "`df_get_date`"
  df_trans_begin
- sh -xe "$df_trans_file"
+ sh -ex "$df_trans_file"
  if [ $? -ne 0 ]; then
   df_warn Part\(s\) of transaction failed. Intent log follows:
   cat "$df_trans_log_file"
   df_log Failed: Transaction 
+  df_trans_end_fail
  else
   df_trans_log_commit
   df_log Succeeded: Transaction
+  df_trans_end_ok
   df_info Transaction succeeded
  fi
  df_trans_cleanup
@@ -228,7 +270,7 @@ case "$1" in
   ;;
  update|upgrade)
   if [ $# -eq 1 ]; then
-   df_fullupgrade ### TODO
+   df_fullupgrade 
   else
    shift
    df_upgrade "$@" ### TODO
@@ -249,7 +291,13 @@ case "$1" in
  cancel|cancel-now)
   df_cancel
   ;;
- help|--help|-?)
+ log|show-log|history|show-history)
+  cat "$df_log_file"
+  ;;
+ trans|transaction|show-trans|show-transaction)
+  cat "$df_trans_log_file"
+  ;;
+ help|--help|-?|get-help)
   echo DFPkg $df_ver usage:
   echo
   echo To install packages and their dependencies:
@@ -272,6 +320,7 @@ case "$1" in
   ;;
  version|--version|get-version)
   echo $df_ver
+  ;;
 esac
 
 : end
