@@ -1,8 +1,13 @@
 #!/bin/sh
 
-df_ver=0.0.1
+### Anticipated-to-be-distribution-customized variables:
+df_log_dir=/var/log/
+### 
+
+df_ver=0.0.2
 
 df_platform="`df_get_platform`"
+df_log_file="$df_log_dir"/dfpkg.log
 
 case "$1" in
  remove|erase|delete|uninstall)
@@ -19,16 +24,25 @@ case "$1" in
   echo  dfpkg uninstall PACKAGE1 PACKAGE2 ...
   echo
   ;;
+ platf|platform|get-platform)
+  echo "$df_platform"
+  ;;
 esac
 
 df_uninstall() {
+ df_log Date: "`date`"
  for pkg in "$@"; do
+  df_log Uninstalled: "$pkg"
  done
  lowlevel_${df_platform}_uninstall "$@"
 }
 
 lowlevel_DragonFly_uninstall() {
  pkg_delete -rR "$@"
+}
+
+lowlevel_FreeBSD_uninstall() {
+ pkg_delete -r "$@"
 }
 
 lowlevel_yum_uninstall() {
@@ -43,7 +57,18 @@ df_get_platform() {
     platf=yum
    fi
    ;;
+  FreeBSD)
+   if [ -e /etc/debian-version ]; then ### This is for handling 
+                                       ### Debian/kFreeBSD [debports]     
+    platf=Debian
+   fi
+   ;;
  esac
  return "$platf"
+}
+
+df_log() {
+ touch "$df_log_file"
+ echo "$@" >> "$df_log_file"
 }
 
