@@ -240,6 +240,7 @@ df_trans_cleanup() {
  touch "$df_trans_log_file" 
  rm -f "$df_trans_file"
  touch "$df_trans_file"
+ df_new_tid
 }
 
 df_trans_end_ok() {
