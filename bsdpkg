@@ -12,7 +12,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.3.2 ### This is bsdpkg's version, not that of DragonFly
+df_ver=0.3.3 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -337,8 +337,8 @@ case "$1" in
   cat "$df_trans_log_file"
   ;;
  help|--help|-?|get-help)
-  echo bsdpkg $df_ver usage:
-  echo
+  echo              "$0" $df_ver usage:
+  echo      
   echo To upgrade the system:
   echo " ""$0" upgrade
   echo To install packages and their dependencies:
