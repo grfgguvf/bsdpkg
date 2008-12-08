@@ -11,7 +11,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.2.10 ### This is dfpkg's version, not that of DragonFly
+df_ver=0.3.0 ### This is dfpkg's version, not that of DragonFly
 
 
 
