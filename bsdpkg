@@ -1,24 +1,18 @@
 #!/bin/sh
 ###
-### DFPkg
+### bsdpkg
 ###
-### Tested only on Fedora 11-rawhide (bash 3.2, ksh? 20080725, zsh 4.3.4), 
+### This file is in the Public Domain.
+###
+### Tested only on Fedora 11-rawhide (bash 3.2, ksh 20080725, zsh 4.3.4), 
 ### currently.. Please test, mainly on DragonFly BSD
-###
 
 ### Anticipated-to-be-distribution-customized variables:
 df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.3.0 ### This is dfpkg's version, not that of DragonFly
-
-
-
-
-
-
-
+df_ver=0.3.0 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
