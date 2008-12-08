@@ -11,7 +11,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.2.8 ### This is dfpkg's version, not that of DragonFly
+df_ver=0.2.10 ### This is dfpkg's version, not that of DragonFly
 
 
 
@@ -143,8 +143,9 @@ lowlevel_yum_uninstall() {
 
 lowlevel_DragonFly_fullupgrade() {
  ### TODO: Upgrade the base-system, too
- echo pkg_radd -uu '\*' ### TODO: Does pkgsrc pkg_add support wildcards?
-}
+ df_warn The base-system upgrade is currently not implemented 
+ echo pkg_radd -uu '\*' ### TODO: Does pkgsrc pkg_add 
+support wildcards? }
 
 lowlevel_FreeBSD_fullupgrade() {
  echo freebsd-update fetch install
@@ -165,7 +166,7 @@ lowlevel_yum_fullupgrade() {
 ###
 
 df_commit_reminder() {
- df_info Operation\(s\) added to transaction, to run it execute:
+ df_info Operation\(s\) added to transaction $df_tid, to run it execute:
  df_info " "dfpkg commit
 }
 
@@ -196,6 +197,26 @@ df_fullupgrade() {
 
 ###
 
+df_tid_init() {
+ if [ ! -d "$df_trans_dir" ]; then
+  mkdir -p "$df_trans_dir"
+ fi
+ if [ ! -e "$df_tid_file" ]; then
+  echo 1 > "$df_tid_file"
+ fi
+}
+
+df_get_tid() {
+ cat "$df_tid_file"
+}
+
+df_new_tid() {
+ echo $(($df_tid+1)) > "$df_tid_file"
+ ### TODO: Update $df_tid
+}
+
+###
+
 df_trans_init() {
  mkdir -p "$df_trans_dir"
  touch "$df_trans_file"
@@ -221,25 +242,26 @@ df_trans_end_fail() {
 }
 
 df_commit() {
- df_log Beginning: Transaction '@' "`df_get_date`"
+ df_log_date
+ df_log Beginning: Transaction $df_tid
  df_trans_begin
  sh -ex "$df_trans_file"
  if [ $? -ne 0 ]; then
-  df_warn Part\(s\) of transaction failed. Intent log follows:
+  df_warn Part\(s\) of transaction $df_tid failed. Intent log follows:
   cat "$df_trans_log_file"
-  df_log Failed: Transaction 
+  df_log Failed: Transaction $df_tid
   df_trans_end_fail
  else
   df_trans_log_commit
-  df_log Succeeded: Transaction
+  df_log Succeeded: Transaction $df_tid
   df_trans_end_ok
-  df_info Transaction succeeded
+  df_info Transaction $df_tid succeeded
  fi
  df_trans_cleanup
 }
 
 df_cancel() {
- df_info Cancelled the transaction. Intent log follows:
+ df_info Cancelled transaction $df_tid. Intent log follows:
  cat "$df_trans_log_file"
  df_trans_cleanup
 }
@@ -257,6 +279,10 @@ df_trans_init
 
 df_trans_log_file="$df_trans_dir"/curr.log
 df_trans_log_init
+
+df_tid_file="$df_trans_dir"/curr.dftid
+df_tid_init
+df_tid="`df_get_tid`"
 
 case "$1" in
  add|install)
@@ -304,11 +330,14 @@ case "$1" in
   cat "$df_log_file"
   ;;
  trans|transaction|show-trans|show-transaction)
+  df_info Intents of transaction ${df_tid}:
   cat "$df_trans_log_file"
   ;;
  help|--help|-?|get-help)
   echo DFPkg $df_ver usage:
   echo
+  echo To upgrade the system:
+  echo " "dfpkg upgrade
   echo To install packages and their dependencies:
   echo " "dfpkg install PACKAGE1 PACKAGE2 ...
   echo To uninstall packages, their no-longer-needed dependencies \(where 
@@ -320,6 +349,9 @@ case "$1" in
   echo " "dfpkg commit
   echo NOTE: To cancel a transaction:
   echo " "dfpkg cancel
+  echo To show the intents of the current transaction:
+  echo " "dfpkg show-trans
+  echo
   echo For immediate operations you can use the -now version of commands:
   echo " "dfpkg install-now PACKAGE1 PACKAGE2 ...
   echo
