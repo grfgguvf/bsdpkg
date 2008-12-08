@@ -12,7 +12,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/run/ #DEFAULT#
 ### 
 
-df_ver=0.3.0 ### This is bsdpkg's version, not that of DragonFly
+df_ver=0.3.2 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -57,7 +57,6 @@ df_log_init() {
 }
 
 df_log() {
- #touch "$df_log_file"
  echo "$@" >> "$df_log_file"
 }
 
@@ -79,7 +78,6 @@ df_trans_log_init() {
 }
 
 df_trans_log() {
- #touch "$df_trans_log_file"
  echo " $@" >> "$df_trans_log_file"
 }
 
@@ -151,6 +149,7 @@ lowlevel_FreeBSD_fullupgrade() {
  echo portsnap -I fetch update ### TODO: portsnap extract DBD?
  ### TODO: Actually update packages (no standard way to do
  ### this on FreeBSD!!)
+ df_warn Upgrade of packages currently not implemented
 }
 
 lowlevel_Debian_fullupgrade() {
@@ -166,7 +165,7 @@ lowlevel_yum_fullupgrade() {
 
 df_commit_reminder() {
  df_info Operation\(s\) added to transaction $df_tid, to run it execute:
- df_info " "dfpkg commit
+ df_info " ""$0" commit
 }
 
 df_install() {
@@ -334,30 +333,30 @@ case "$1" in
   cat "$df_log_file"
   ;;
  trans|transaction|show-trans|show-transaction)
-  df_info Intents of transaction ${df_tid}:
+  df_info Intent log of transaction ${df_tid} follows:
   cat "$df_trans_log_file"
   ;;
  help|--help|-?|get-help)
-  echo DFPkg $df_ver usage:
+  echo bsdpkg $df_ver usage:
   echo
   echo To upgrade the system:
-  echo " "dfpkg upgrade
+  echo " ""$0" upgrade
   echo To install packages and their dependencies:
-  echo " "dfpkg install PACKAGE1 PACKAGE2 ...
+  echo " ""$0" install PACKAGE1 PACKAGE2 ...
   echo To uninstall packages, their no-longer-needed dependencies \(where 
   echo "    "supported\), and packages that depend on them:
-  echo " "dfpkg uninstall PACKAGE1 PACKAGE2 ...
+  echo " ""$0" uninstall PACKAGE1 PACKAGE2 ...
   echo
   echo NOTE: You have to actually run the transaction for the operations to 
   echo "    "be done:
-  echo " "dfpkg commit
+  echo " ""$0" commit
   echo NOTE: To cancel a transaction:
-  echo " "dfpkg cancel
+  echo " ""$0" cancel
   echo To show the intents of the current transaction:
-  echo " "dfpkg show-trans
+  echo " ""$0" show-trans
   echo
   echo For immediate operations you can use the -now version of commands:
-  echo " "dfpkg install-now PACKAGE1 PACKAGE2 ...
+  echo " ""$0" install-now PACKAGE1 PACKAGE2 ...
   echo
   ;;
  platf|platform|get-platform)
@@ -368,5 +367,5 @@ case "$1" in
   ;;
 esac
 
-: end
+: --- The End ---
 
