@@ -2,7 +2,7 @@
 ###
 ### DFPkg
 ###
-### Tested only on Fedora 11-rawhide (bash 3.2, ksh 20080725, zsh 4.3.4), 
+### Tested only on Fedora 11-rawhide (bash 3.2, ksh? 20080725, zsh 4.3.4), 
 ### currently.. Please test, mainly on DragonFly BSD
 ###
 
@@ -57,11 +57,13 @@ df_get_platform() {
 ###
 
 df_log_init() {
- touch "$df_log_file"
+ if [ ! -e "$df_log_file" ]; then
+  touch "$df_log_file"
+ fi
 }
 
 df_log() {
- touch "$df_log_file"
+ #touch "$df_log_file"
  echo "$@" >> "$df_log_file"
 }
 
@@ -77,11 +79,13 @@ df_log_date() {
 ###
 
 df_trans_log_init() {
- touch "$df_trans_log_file"
+ if [ ! -e "$df_trans_log_file" ]; then
+  touch "$df_trans_log_file"
+ fi
 }
 
 df_trans_log() {
- touch "$df_trans_log_file"
+ #touch "$df_trans_log_file"
  echo " $@" >> "$df_trans_log_file"
 }
 
@@ -145,7 +149,8 @@ lowlevel_DragonFly_fullupgrade() {
  ### TODO: Upgrade the base-system, too
  df_warn The base-system upgrade is currently not implemented 
  echo pkg_radd -uu '\*' ### TODO: Does pkgsrc pkg_add 
-support wildcards? }
+                        ### support wildcards?
+}
 
 lowlevel_FreeBSD_fullupgrade() {
  echo freebsd-update fetch install
@@ -218,8 +223,12 @@ df_new_tid() {
 ###
 
 df_trans_init() {
- mkdir -p "$df_trans_dir"
- touch "$df_trans_file"
+ if [ ! -d "$df_trans_dir" ]; then
+  mkdir -p "$df_trans_dir"
+ fi
+ if [ ! -e "$df_trans_file" ]; then
+  touch "$df_trans_file"
+ fi
 }
 
 df_trans_begin() {
