@@ -126,7 +126,7 @@ lowlevel_DragonFly_uninstall() {
 }
 
 lowlevel_FreeBSD_uninstall() {
- echo pkg_delete -r "$@"
+ echo pkg_delete -rv "$@"
 }
 
 lowlevel_Debian_uninstall() {
