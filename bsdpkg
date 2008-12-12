@@ -14,7 +14,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=0.3.6 ### This is bsdpkg's version, not that of DragonFly
+df_ver=0.3.7 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -292,17 +292,18 @@ df_cancel() {
 
 df_platform="`df_get_platform`"
 
-df_log_file="$df_log_dir"/dfpkg.log
+df_log_file="$df_log_dir"/bsdpkg.log
 df_log_init
 
-df_trans_dir="$df_run_dir"/dfpkg/trans/
-df_trans_file="$df_trans_dir"//curr.dftrans
+df_trans_dir="$df_run_dir"/bsdpkg/trans/
+
+df_trans_file="$df_trans_dir"//curr.trans
 df_trans_init
 
 df_trans_log_file="$df_trans_dir"/curr.log
 df_trans_log_init
 
-df_tid_file="$df_trans_dir"/curr.dftid
+df_tid_file="$df_trans_dir"/curr.tid
 df_tid_init
 df_tid="`df_get_tid`"
 
