@@ -7,14 +7,15 @@
 ### Tested only on:
 ###  FreeBSD 7.1-RC1
 ###  Fedora 11-rawhide (bash 3.2, ksh 20080725, zsh 4.3.4)
-### Please test, mainly on DragonFly BSD
+### Please test, mainly on DragonFly and other BSDs. It's supposed to be
+### portable to any UNIX.
 
 ### Anticipated-to-be-distribution-customized variables:
 df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=0.3.7 ### This is bsdpkg's version, not that of DragonFly
+df_ver=0.3.10 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -37,8 +38,9 @@ df_get_date() {
 df_get_platform() {
  platf="`uname`"
  case "$platf" in
-  Linux|Hurd|FreeBSD) ### Always remember that things like Debian/kFreeBSD 
-                      ### [debports] exist
+  Linux|Hurd|FreeBSD|SunOS)
+      ### Always remember that things like Debian/kFreeBSD 
+      ### [debports] exist
    if [ -e /etc/fedora-release ]; then
     platf=yum
    elif [ -e /etc/debian-version ]; then ### This might supposedly fail on 
@@ -110,6 +112,10 @@ lowlevel_FreeBSD_install() {
  echo pkg_add -r "$@"
 }
 
+lowlevel_OpenBSD_install() {
+ echo pkg_add -v "$@"
+}
+
 lowlevel_Debian_install() {
  echo aptitude update
  echo aptitude -yR install "$@"
@@ -117,6 +123,10 @@ lowlevel_Debian_install() {
 
 lowlevel_yum_install() {
  echo yum -y install "$@"
+}
+
+lowlevel_SunOS_install() {
+ echo pkg install "$@"
 }
 
 ###
@@ -129,12 +139,20 @@ lowlevel_FreeBSD_uninstall() {
  echo pkg_delete -rv "$@"
 }
 
+lowlevel_OpenBSD_uninstall() {
+ echo pkg_delete -v "$@" ### TODO: Remove orphans
+}
+
 lowlevel_Debian_uninstall() {
  echo aptitude -y remove "$@"
 }
 
 lowlevel_yum_uninstall() {
  echo yum -y remove "$@"
+}
+
+lowlevel_SunOS_uninstall () {
+ echo pkg uninstall "$@"
 }
 
 ###
@@ -171,6 +189,13 @@ lowlevel_FreeBSD_fullupgrade() {
  echo pkgdb -Fa
 }
 
+lowlevel_OpenBSD_fullupgrade() {
+ df_warn OpenBSD basesystem upgrade yet unimplemented ### TODO:
+     ### No automated easy tool, but binary release upgrades
+     ### are possible by extracting sets by hand... retro
+ echo pkg_add -u
+}
+
 lowlevel_Debian_fullupgrade() {
  echo aptitude update
  echo aptitude -yR full-upgrade 
@@ -178,6 +203,10 @@ lowlevel_Debian_fullupgrade() {
 
 lowlevel_yum_fullupgrade() {
  echo yum -y upgrade
+}
+
+lowlevel_SunOS_fullupgrade() {
+ echo pkg image-update
 }
 
 ###
