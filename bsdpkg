@@ -5,7 +5,7 @@
 ### This file is in the Public Domain.
 ###
 ### Tested only on:
-###  FreeBSD 7.1-RC1
+###  FreeBSD 7.1-RC1 [Vrooom]
 ###  Fedora 11-rawhide (bash 3.2, ksh 20080725, zsh 4.3.4)
 ### Please test, mainly on DragonFly and other BSDs. It's supposed to be
 ### portable to any UNIX.
@@ -15,7 +15,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=43 ### This is bsdpkg's version, not that of DragonFly (r0
+df_ver=50 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -25,11 +25,6 @@ df_warn() {
 
 df_info() {
  echo '(i)' "$@" 1>&2
-}
-
-df_get_ts() {
- df_warn This function ain"'"t spos"'"d to be called
- true
 }
 
 df_get_date() {
@@ -44,9 +39,13 @@ df_get_platform() {
       ### or Nexenta exist
    if [ -e /etc/fedora-release ]; then
     platf=yum
-   elif [ -e /etc/debian-version ]; then ### This might supposedly fail on 
-                                         ### >=etch installations
+   elif [ -e /etc/debian-version -o -e /etc/debian.version -o \
+       -e /etc/debian_version -o -e /etc/debian-release -o \
+       -e /etc/debian_release ]; then
+    ### This might supposedly fail on >=Etch installations
     platf=Debian
+   elif test -e /etc/SUSE-release -o -e /etc/SuSE-release; then
+    platf=zyp
    fi
    ;;
  esac
@@ -139,6 +138,8 @@ df_ver_upgrade_40_to_41() {
 df_ver_upgrade() {
  if test $1 -eq 40 -a $2 -eq 41; then
   return 0
+ elif test $2 -eq 50; then
+  return 0 ### No upgrade needed
  elif false; then
   true
  fi
@@ -189,6 +190,10 @@ lowlevel_SunOS_install() {
  echo pkg install "$@"
 }
 
+lowlevel_zyp_install() {
+ echo zypper install "$@"
+}
+
 ###
 
 lowlevel_DragonFly_uninstall() {
@@ -214,6 +219,10 @@ lowlevel_yum_uninstall() {
 
 lowlevel_SunOS_uninstall () {
  echo pkg uninstall "$@"
+}
+
+lowlevel_zyp_uninstall() {
+ echo zypper remove "$@"
 }
 
 ###
@@ -268,6 +277,11 @@ lowlevel_yum_fullupgrade() {
 
 lowlevel_SunOS_fullupgrade() {
  echo pkg image-update
+}
+
+lowlevel_zyp_fullupgrade() {
+ echo zypper --non-interactive update
+ echo zypper --non-interactive dist-upgrade
 }
 
 ###
@@ -336,14 +350,21 @@ df_trans_init() {
  fi
 }
 
-df_trans_begin() {
+df_trans_prepare() {
  cd "$df_trans_dir"
  ### TODO: Locking needed here (and in many other places I bet)
  mv "$df_trans_file" ${df_tid}.trans
  df_trans_file="$df_trans_dir/$df_tid.trans"
  mv "$df_trans_log_file" ${df_tid}.log
  df_trans_log_file="$df_trans_dir/$df_tid.log"
+}
+
+df_trans_begin() {
  ### TODO: Clone filesystem / Make snapshot / etc (maybe separate func)
+}
+
+df_trans_stat() {
+ echo $1 > "$df_trans_dir"/${df_tid}.stat
 }
 
 df_trans_cleanup() {
@@ -356,20 +377,21 @@ df_trans_cleanup() {
 
 df_trans_end_ok() {
  true ### TODO: Promote clone / Remove snapshot / etc
- echo ok > "$df_trans_dir"/${df_tid}.stat
+ df_trans_stat  ok
  df_new_tid
 }
 
 df_trans_end_fail() {
  true ### TODO: Remove clone / Rollback to snapshot / etc
- echo fail > "$df_trans_dir"/${df_tid}.stat
+ df_trans_stat fail
  df_new_tid
 }
 
 df_commit() {
+ df_trans_begin
  df_log_date
  df_log Beginning: Transaction $df_tid
- df_trans_begin
+ df_trans_prepare
  sh -ex "$df_trans_file"
  if [ $? -ne 0 ]; then
   df_warn Part\(s\) of transaction $df_tid failed. Intent log follows:
@@ -386,15 +408,14 @@ df_commit() {
 }
 
 df_cancel_trans() {
- df_trans_begin
- echo cancel > "$df_trans_dir"/${df_tid}.stat
+ df_trans_prepare
+ df_trans_stat cancel
 }
 
 df_cancel() {
- df_info Cancelled transaction $df_tid. Intent log follows:
+ df_info Cancelled transaction ${df_tid}. Intent log follows:
  cat "$df_trans_log_file"
  df_cancel_trans
- df_trans_cleanup
  df_new_tid
 }
 
@@ -479,8 +500,14 @@ case "$1" in
   exit
   ;;
  trans|transaction|show-trans|show-transaction)
-  df_info Intent log of transaction ${df_tid} follows:
-  cat "$df_trans_log_file"
+  ### TODO MUNDO VEM CA
+  if test "$2" == "" ; then
+   df_info Intent log of transaction ${df_tid} follows:
+   cat "$df_trans_log_file"
+  else
+   df_info Intent log of transaction "$2" follows:
+   cat "$df_trans_dir"/"$2.log"
+  fi
   exit
   ;;
  help|--help|-?|get-help)
