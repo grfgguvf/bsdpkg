@@ -15,7 +15,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=39 ### This is bsdpkg's version, not that of DragonFly
+df_ver=40 ### This is bsdpkg's version, not that of DragonFly (r0
 
 ###
 
@@ -118,7 +118,7 @@ df_ver_file_update() {
 }
 
 df_ver_file_init() {
- if test -e "$df_ver_file"; then
+ if test ! -e "$df_ver_file"; then
   df_ver_file_update
  fi
 }
