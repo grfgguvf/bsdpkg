@@ -15,7 +15,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=40 ### This is bsdpkg's version, not that of DragonFly (r0
+df_ver=41 ### This is bsdpkg's version, not that of DragonFly (r0
 
 ###
 
@@ -58,6 +58,7 @@ df_get_platform() {
 df_db_dir_init() {
  if test ! -d "$df_db_dir"; then
   mkdir -p "$df_db_dir"
+  df_info Creating directory "$df_db_dir"
  fi
 }
 
@@ -66,6 +67,7 @@ df_db_dir_init() {
 df_log_init() {
  if [ ! -e "$df_log_file" ]; then
   touch "$df_log_file"
+  df_info Creating log file "$df_log_file"
  fi
 }
 
@@ -120,6 +122,7 @@ df_ver_file_update() {
 df_ver_file_init() {
  if test ! -e "$df_ver_file"; then
   df_ver_file_update
+  df_info Creating file "$df_ver_file"
  fi
 }
 
@@ -280,10 +283,15 @@ df_fullupgrade() {
 
 ###
 
-df_tid_init() {
- if [ ! -d "$df_trans_dir" ]; then
+df_trans_dir_init() {
+ if test ! -d "$df_trans_dir"; then
   mkdir -p "$df_trans_dir"
+  df_info Creating directory "$df_trans_dir"
  fi
+}
+
+df_tid_init() {
+ df_trans_dir_init
  if [ ! -e "$df_tid_file" ]; then
   echo 1 > "$df_tid_file"
  fi
@@ -301,9 +309,7 @@ df_new_tid() {
 ###
 
 df_trans_init() {
- if [ ! -d "$df_trans_dir" ]; then
-  mkdir -p "$df_trans_dir"
- fi
+ df_trans_dir_init
  if [ ! -e "$df_trans_file" ]; then
   touch "$df_trans_file"
  fi
@@ -481,7 +487,8 @@ case "$1" in
   exit
   ;;
  platf|platform|get-platform)
-  echo Platform: "$df_platform"
+  #echo Platform: "$df_platform"
+  echo "$df_platform"
   exit
   ;;
  version|--version|get-version)
