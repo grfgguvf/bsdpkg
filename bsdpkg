@@ -15,7 +15,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=41 ### This is bsdpkg's version, not that of DragonFly (r0
+df_ver=43 ### This is bsdpkg's version, not that of DragonFly (r0
 
 ###
 
@@ -24,7 +24,7 @@ df_warn() {
 }
 
 df_info() {
- echo '{i}' "$@" 1>&2
+ echo '(i)' "$@" 1>&2
 }
 
 df_get_ts() {
@@ -130,13 +130,34 @@ df_ver_getlast() {
  cat "$df_ver_file"
 }
 
+###
+
+df_ver_upgrade_40_to_41() {
+ return 0
+}
+
+df_ver_upgrade() {
+ if test $1 -eq 40 -a $2 -eq 41; then
+  return 0
+ elif false; then
+  true
+ fi
+ return 0#1 ### TODO?
+}
+
+###
+
 df_ver_handler() {
  last_ver="`df_ver_getlast`"
  if test "$last_ver" != "$df_ver"; then
-  ### TODO: -lt, but that would need simple integer versions......
-  df_warn Upgrading "$0" databases from version "$last_ver" to
-  df_warn "    $df_ver" not implemented
+  ### TODO: -lt, but that would need simple integer versions...... 
+  ### Or is that needed?
   #df_ver_upgrade_${last_ver}_to_${df_ver}
+  df_ver_upgrade $last_ver $df_ver
+  if test $? -ne 0; then
+   df_warn Upgrading "$0" databases from version $last_ver to $df_ver is
+   df_warn " "not implemented
+  fi
   df_ver_file_update
  fi
 }
