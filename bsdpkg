@@ -15,7 +15,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=0.3.10 ### This is bsdpkg's version, not that of DragonFly
+df_ver=39 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -28,7 +28,8 @@ df_info() {
 }
 
 df_get_ts() {
- true ### TODO: POSIX date(1) does not support neither %s nor %N
+ df_warn This function ain"'"t spos"'"d to be called
+ true
 }
 
 df_get_date() {
@@ -40,7 +41,7 @@ df_get_platform() {
  case "$platf" in
   Linux|Hurd|FreeBSD|SunOS)
       ### Always remember that things like Debian/kFreeBSD 
-      ### [debports] exist
+      ### or Nexenta exist
    if [ -e /etc/fedora-release ]; then
     platf=yum
    elif [ -e /etc/debian-version ]; then ### This might supposedly fail on 
@@ -50,6 +51,14 @@ df_get_platform() {
    ;;
  esac
  echo "$platf"
+}
+
+###
+
+df_db_dir_init() {
+ if test ! -d "$df_db_dir"; then
+  mkdir -p "$df_db_dir"
+ fi
 }
 
 ###
@@ -104,6 +113,33 @@ df_trans_log_commit() {
 
 ###
 
+df_ver_file_update() {
+ echo "$df_ver" > "$df_ver_file"
+}
+
+df_ver_file_init() {
+ if test -e "$df_ver_file"; then
+  df_ver_file_update
+ fi
+}
+
+df_ver_getlast() {
+ cat "$df_ver_file"
+}
+
+df_ver_handler() {
+ last_ver="`df_ver_getlast`"
+ if test "$last_ver" != "$df_ver"; then
+  ### TODO: -lt, but that would need simple integer versions......
+  df_warn Upgrading "$0" databases from version "$last_ver" to
+  df_warn "    $df_ver" not implemented
+  #df_ver_upgrade_${last_ver}_to_${df_ver}
+  df_ver_file_update
+ fi
+}
+
+###
+
 lowlevel_DragonFly_install() {
  echo pkg_radd  "$@"
 }
@@ -141,6 +177,7 @@ lowlevel_FreeBSD_uninstall() {
 
 lowlevel_OpenBSD_uninstall() {
  echo pkg_delete -v "$@" ### TODO: Remove orphans
+                         ### Supposedly OBSD has support for this??
 }
 
 lowlevel_Debian_uninstall() {
@@ -257,8 +294,8 @@ df_get_tid() {
 }
 
 df_new_tid() {
- echo $(($df_tid+1)) > "$df_tid_file"
- ### TODO: Update $df_tid
+ df_tid=$(($df_tid+1))
+ echo $df_tid > "$df_tid_file"
 }
 
 ###
@@ -273,23 +310,33 @@ df_trans_init() {
 }
 
 df_trans_begin() {
- true ### TODO: Clone filesystem / Make snapshot / etc
+ cd "$df_trans_dir"
+ ### TODO: Locking needed here (and in many other places I bet)
+ mv "$df_trans_file" ${df_tid}.trans
+ df_trans_file="$df_trans_dir/$df_tid.trans"
+ mv "$df_trans_log_file" ${df_tid}.log
+ df_trans_log_file="$df_trans_dir/$df_tid.log"
+ ### TODO: Clone filesystem / Make snapshot / etc (maybe separate func)
 }
 
 df_trans_cleanup() {
- rm -f "$df_trans_log_file"
- touch "$df_trans_log_file" 
- rm -f "$df_trans_file"
- touch "$df_trans_file"
- df_new_tid
+ ### TODO: Orly?
+ #rm -f "$df_trans_log_file"
+ #touch "$df_trans_log_file" 
+ #rm -f "$df_trans_file"
+ #touch "$df_trans_file"
 }
 
 df_trans_end_ok() {
  true ### TODO: Promote clone / Remove snapshot / etc
+ echo ok > "$df_trans_dir"/${df_tid}.stat
+ df_new_tid
 }
 
 df_trans_end_fail() {
  true ### TODO: Remove clone / Rollback to snapshot / etc
+ echo fail > "$df_trans_dir"/${df_tid}.stat
+ df_new_tid
 }
 
 df_commit() {
@@ -311,28 +358,42 @@ df_commit() {
  df_trans_cleanup
 }
 
+df_cancel_trans() {
+ df_trans_begin
+ echo cancel > "$df_trans_dir"/${df_tid}.stat
+}
+
 df_cancel() {
  df_info Cancelled transaction $df_tid. Intent log follows:
  cat "$df_trans_log_file"
+ df_cancel_trans
  df_trans_cleanup
+ df_new_tid
 }
 
 ###
 
 df_platform="`df_get_platform`"
 
+df_db_dir="$df_run_dir"/bsdpkg/
+df_db_dir_init
+
+df_ver_file="$df_db_dir"/last.ver
+df_ver_file_init
+df_ver_handler
+
 df_log_file="$df_log_dir"/bsdpkg.log
 df_log_init
 
-df_trans_dir="$df_run_dir"/bsdpkg/trans/
+df_trans_dir="$df_db_dir"/trans/
 
-df_trans_file="$df_trans_dir"//curr.trans
+df_trans_file="$df_trans_dir"/next.trans
 df_trans_init
 
-df_trans_log_file="$df_trans_dir"/curr.log
+df_trans_log_file="$df_trans_dir"/next.log
 df_trans_log_init
 
-df_tid_file="$df_trans_dir"/curr.tid
+df_tid_file="$df_trans_dir"/next.tid
 df_tid_init
 df_tid="`df_get_tid`"
 
@@ -340,11 +401,13 @@ case "$1" in
  add|install)
   shift
   df_install "$@"
+  exit
   ;;
  add-now|install-now)
   shift
   df_install "$@"
   df_commit
+  exit
   ;;
  update|upgrade)
   if [ $# -eq 1 ]; then
@@ -353,6 +416,7 @@ case "$1" in
    shift
    df_upgrade "$@" ### TODO
   fi;
+  exit
   ;;
  update-now|upgrade-now)
   if [ $# -eq 1 ]; then
@@ -362,28 +426,35 @@ case "$1" in
    df_upgrade "$@" ### TODO
   fi
   df_commit
+  exit
   ;;
  remove|erase|delete|uninstall)
   shift
   df_uninstall "$@"
+  exit
   ;;
  remove-now|erase-now|delete-now|uninstall-now)
   shift
   df_uninstall "$@"
   df_commit
+  exit
   ;;
  commit|run|execute|commit-now|run-now|execute-now)
   df_commit
+  exit
   ;; 
  cancel|cancel-now)
   df_cancel
+  exit
   ;;
  log|show-log|history|show-history)
   cat "$df_log_file"
+  exit
   ;;
  trans|transaction|show-trans|show-transaction)
   df_info Intent log of transaction ${df_tid} follows:
   cat "$df_trans_log_file"
+  exit
   ;;
  help|--help|-?|get-help)
   echo              "$0" $df_ver usage:
@@ -407,14 +478,18 @@ case "$1" in
   echo For immediate operations you can use the -now version of commands:
   echo " ""$0" install-now PACKAGE1 PACKAGE2 ...
   echo
+  exit
   ;;
  platf|platform|get-platform)
   echo Platform: "$df_platform"
+  exit
   ;;
  version|--version|get-version)
   echo $df_ver
+  exit
   ;;
 esac
 
-: --- The End ---
+df_warn Unknown command "$1"
+exit 1
 
