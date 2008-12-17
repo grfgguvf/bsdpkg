@@ -170,7 +170,7 @@ lowlevel_DragonFly_install() {
 }
 
 lowlevel_FreeBSD_install() {
- echo pkg_add -r "$@"
+ echo PKG_PATH=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/ pkg_add -r "$@"
 }
 
 lowlevel_OpenBSD_install() {
