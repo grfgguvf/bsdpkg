@@ -165,12 +165,19 @@ df_ver_handler() {
 
 ###
 
+lowlevel_FreeBSD_pkgpath() {
+ echo export PKG_PATH=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/
+}
+
+###
+
 lowlevel_DragonFly_install() {
  echo pkg_radd  "$@"
 }
 
 lowlevel_FreeBSD_install() {
- echo PKG_PATH=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/ pkg_add -r "$@"
+ lowlevel_FreeBSD_pkgpath
+ echo pkg_add -r "$@"
 }
 
 lowlevel_OpenBSD_install() {
@@ -235,7 +242,7 @@ lowlevel_FreeBSD_portsnap_extract() {
 }
 
 lowlevel_FreeBSD_install_portupgrade() {
- printf 'if [ ! -e /usr/local/sbin/portupgrade ]; then '
+ printf 'if [ ! -e /usr/local/sbin/portupgrade ]; then ' ### TODO: Works?
  printf  'pkg_add -r portupgrade; '
  printf 'fi\n'
 }
@@ -253,6 +260,7 @@ lowlevel_FreeBSD_fullupgrade() {
  echo freebsd-update fetch install
  lowlevel_FreeBSD_portsnap_extract
  echo portsnap -I fetch update
+ lowlevel_FreeBSD_pkgpath
  lowlevel_FreeBSD_install_portupgrade
  echo pkgdb -Fa
  echo portupgrade -aPPR --batch
@@ -276,10 +284,12 @@ lowlevel_yum_fullupgrade() {
 }
 
 lowlevel_SunOS_fullupgrade() {
+ ### TODO: Needs refresh?
  echo pkg image-update
 }
 
 lowlevel_zyp_fullupgrade() {
+ ### TODO: Needs refresh?
  echo zypper --non-interactive update
  echo zypper --non-interactive dist-upgrade
 }
