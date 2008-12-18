@@ -177,7 +177,7 @@ df_ver_handler() {
 ###
 
 lowlevel_FreeBSD_pkgpath() {
- echo export PKG_PATH=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/
+ echo export PACKAGESITE=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/
  ### TODO: Or /All/??? Or /packages-stable/?
 }
 
