@@ -178,7 +178,6 @@ df_ver_handler() {
 
 lowlevel_FreeBSD_pkgpath() {
  echo export PACKAGESITE=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/
- ### TODO: Or /All/??? Or /packages-stable/?
 }
 
 ###
@@ -189,7 +188,7 @@ lowlevel_DragonFly_install() {
 
 lowlevel_FreeBSD_install() {
  lowlevel_FreeBSD_pkgpath
- echo pkg_add -r "$@"
+ echo pkg_add -rv "$@"
 }
 
 lowlevel_OpenBSD_install() {
