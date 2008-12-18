@@ -15,7 +15,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=50 ### This is bsdpkg's version, not that of DragonFly
+df_ver=51 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -140,6 +140,14 @@ df_ver_upgrade() {
   return 0
  elif test $2 -eq 50; then
   return 0 ### No upgrade needed
+ elif test $2 -eq 51; then
+  ### TODO: test -f instead of test -e?! Is it in POSIX?
+  if test -e "$df_run_dir"/dfpkg/done:portsnap_extract; then
+   mkdir -p "$df_db_dir"
+   mv "$df_run_dir"/dfpkg/done:portsnap_extract "$df_db_dir"
+   ### TODO: mv -v in POSIX?
+  fi
+  return 0
  elif false; then
   true
  fi
@@ -150,7 +158,7 @@ df_ver_upgrade() {
 
 df_ver_handler() {
  last_ver="`df_ver_getlast`"
- if test "$last_ver" != "$df_ver"; then
+ if test "$last_ver" -lt "$df_ver"; then
   ### TODO: -lt, but that would need simple integer versions...... 
   ### Or is that needed?
   #df_ver_upgrade_${last_ver}_to_${df_ver}
@@ -160,6 +168,9 @@ df_ver_handler() {
    df_warn " "not implemented
   fi
   df_ver_file_update
+ elif test $last_ver -gt $df_ver; then
+  df_warn Downgrading "$0" databases \(from v. $last_ver to ${df_ver}\)\?
+  df_warn " "Well, that ain"'"t supported... Uncommitted transaction may be lost
  fi
 }
 
@@ -167,6 +178,7 @@ df_ver_handler() {
 
 lowlevel_FreeBSD_pkgpath() {
  echo export PKG_PATH=ftp://ftp.FreeBSD.org/pub/FreeBSD/ports/'"`uname -m`"'/packages-current/Latest/
+ ### TODO: Or /All/??? Or /packages-stable/?
 }
 
 ###
@@ -235,9 +247,9 @@ lowlevel_zyp_uninstall() {
 ###
 
 lowlevel_FreeBSD_portsnap_extract() {
- printf 'if [ ! -e '"$df_run_dir"'/dfpkg/done:portsnap_extract ]; then '
+ printf 'if [ ! -e '"$df_db_dir"'/done:portsnap_extract ]; then '
  printf  'portsnap fetch extract; '
- printf  'touch '"$df_run_dir"'/dfpkg/done:portsnap_extract; '
+ printf  'touch '"$df_db_dir"'/done:portsnap_extract; '
  printf 'fi\n'
 }
 
