@@ -504,7 +504,6 @@ while true; do
    exit 
    ;;
   update|upgrade)
-   df_warn DEBUG: argc=$# ### TODO
    if test $# -eq 1; then
     df_fullupgrade 
    else
@@ -533,7 +532,6 @@ while true; do
    exit
    ;;
   trans|transaction|show-trans|show-transaction)
-   df_warn DEBUG: argc=$# ### TODO
    if test $# -eq 1; then
     df_info Intent log of transaction ${df_tid} follows:
     cat "$df_trans_log_file"
