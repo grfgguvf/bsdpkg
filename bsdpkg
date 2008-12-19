@@ -10,12 +10,15 @@
 ### Please test, mainly on DragonFly and other BSDs. It's supposed to be
 ### portable to any UNIX.
 
+### TODO: test -f instead of test -e?! Is it in POSIX?
+### TODO: test instead of [
+
 ### Anticipated-to-be-distribution-customized variables:
 df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ### 
 
-df_ver=51 ### This is bsdpkg's version, not that of DragonFly
+df_ver=52 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -109,6 +112,7 @@ df_trans_log_commit() {
  | sed -e s/Install:/Installed:/g \
  | sed -e s/Uninstall:/Uninstalled:/g \
  | sed -e s/FullyUpgrade:/FullyUpgraded:/g \
+ | sed -e s/Upgrade:/Upgraded:/g \
  >> "$df_log_file"
 }
 
@@ -139,19 +143,17 @@ df_ver_upgrade() {
  if test $1 -eq 40 -a $2 -eq 41; then
   return 0
  elif test $2 -eq 50; then
-  return 0 ### No upgrade needed
+  return 0
  elif test $2 -eq 51; then
-  ### TODO: test -f instead of test -e?! Is it in POSIX?
-  if test -e "$df_run_dir"/dfpkg/done:portsnap_extract; then
+  if test -f "$df_run_dir"/dfpkg/done:portsnap_extract; then
    mkdir -p "$df_db_dir"
    mv "$df_run_dir"/dfpkg/done:portsnap_extract "$df_db_dir"
-   ### TODO: mv -v in POSIX?
   fi
   return 0
- elif false; then
-  true
+ elif test $2 -eq 52; then
+  return 0
  fi
- return 0#1 ### TODO?
+ return 1
 }
 
 ###
@@ -159,9 +161,6 @@ df_ver_upgrade() {
 df_ver_handler() {
  last_ver="`df_ver_getlast`"
  if test "$last_ver" -lt "$df_ver"; then
-  ### TODO: -lt, but that would need simple integer versions...... 
-  ### Or is that needed?
-  #df_ver_upgrade_${last_ver}_to_${df_ver}
   df_ver_upgrade $last_ver $df_ver
   if test $? -ne 0; then
    df_warn Upgrading "$0" databases from version $last_ver to $df_ver is
@@ -169,7 +168,7 @@ df_ver_handler() {
   fi
   df_ver_file_update
  elif test $last_ver -gt $df_ver; then
-  df_warn Downgrading "$0" databases \(from v. $last_ver to ${df_ver}\)\?
+  df_warn Downgrading "$0" databases \(from version $last_ver to ${df_ver}\)\?
   df_warn " "Well, that ain"'"t supported... Uncommitted transaction may be lost
  fi
 }
@@ -253,17 +252,16 @@ lowlevel_FreeBSD_portsnap_extract() {
 }
 
 lowlevel_FreeBSD_install_portupgrade() {
- printf 'if [ ! -e /usr/local/sbin/portupgrade ]; then ' ### TODO: Works?
- printf  'pkg_add -r portupgrade; '
- printf 'fi\n'
+ printf 'if test ! -x /usr/local/sbin/portupgrade ]; then \n' 
+ lowlevel_FreeBSD_install portuprade
+ printf '\nfi\n'
 }
 
 ###
 
 lowlevel_FreeBSD_upgrade() {
  lowlevel_FreeBSD_pkgpath
- echo pkg_add -rvF "$@"
- ### TODO: May not work??
+ echo pkg_add -rvF "$@" ### TODO: May not work??
 }
 
 ###
@@ -280,7 +278,8 @@ lowlevel_FreeBSD_fullupgrade() {
  lowlevel_FreeBSD_portsnap_extract
  echo portsnap -I fetch update
  lowlevel_FreeBSD_pkgpath
- lowlevel_FreeBSD_install_portupgrade
+ lowlevel_FreeBSD_install_portupgrade ### TODO: Maybe portupgrade
+  ### is not the best option
  echo pkgdb -Fa
  echo portupgrade -aPPR --batch
  echo pkgdb -Fa
@@ -398,7 +397,7 @@ df_trans_prepare() {
 }
 
 df_trans_begin() {
- ### TODO: Clone filesystem / Make snapshot / etc (maybe separate func)
+ true ### TODO: Clone filesystem / Make snapshot / etc (maybe separate func)
 }
 
 df_trans_stat() {
@@ -406,21 +405,17 @@ df_trans_stat() {
 }
 
 df_trans_cleanup() {
- ### TODO: Orly?
- #rm -f "$df_trans_log_file"
- #touch "$df_trans_log_file" 
- #rm -f "$df_trans_file"
- #touch "$df_trans_file"
+ true
 }
 
 df_trans_end_ok() {
- true ### TODO: Promote clone / Remove snapshot / etc
+ ### TODO: Promote clone / Remove snapshot / etc
  df_trans_stat  ok
  df_new_tid
 }
 
 df_trans_end_fail() {
- true ### TODO: Remove clone / Rollback to snapshot / etc
+ ### TODO: Remove clone / Rollback to snapshot / etc
  df_trans_stat fail
  df_new_tid
 }
