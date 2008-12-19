@@ -16,7 +16,7 @@ df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
 ###
 
-df_ver=52 ### This is bsdpkg's version, not that of DragonFly
+df_ver=53 ### This is bsdpkg's version, not that of DragonFly
 
 ###
 
@@ -140,15 +140,13 @@ df_ver_upgrade_40_to_41() {
 df_ver_upgrade() {
  if test $1 -eq 40 -a $2 -eq 41; then
   return 0
- elif test $2 -eq 50; then
+ elif test $2 -eq 50 -o $2 -eq 52 -o $2 -eq 53; then
   return 0
  elif test $2 -eq 51; then
   if test -f "$df_run_dir"/dfpkg/done:portsnap_extract; then
    df_db_dir_init
    mv "$df_run_dir"/dfpkg/done:portsnap_extract "$df_db_dir"
   fi
-  return 0
- elif test $2 -eq 52; then
   return 0
  fi
  return 1
@@ -189,7 +187,7 @@ lowlevel_DragonFly_install() {
 
 lowlevel_FreeBSD_install() {
  lowlevel_FreeBSD_pkgpath
- echo pkg_add -rv "$@" ### TODO: -v is too verbose
+ echo pkg_add -r "$@" ### TODO: -v is too verbose, but no -v is not verbose enough
 }
 
 lowlevel_OpenBSD_install() {
@@ -220,7 +218,7 @@ lowlevel_DragonFly_uninstall() {
 }
 
 lowlevel_FreeBSD_uninstall() {
- echo pkg_delete -rv "$@" ### TODO: -v is too verbose, but no -v is not verbose enough
+ echo pkg_delete -r "$@" ### TODO: -v is too verbose, but no -v is not verbose enough
 }
 
 lowlevel_OpenBSD_uninstall() {
@@ -263,7 +261,7 @@ lowlevel_FreeBSD_install_portupgrade() {
 
 lowlevel_FreeBSD_upgrade() {
  lowlevel_FreeBSD_pkgpath
- echo pkg_add -rvF "$@" ### TODO: It doesn't fucking work, PR 129749
+ echo pkg_add -rfF "$@" ### TODO: It doesn't fucking work, PR 129749
 }
 
 lowlevel_yum_upgrade() {
