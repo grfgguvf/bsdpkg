@@ -260,6 +260,14 @@ lowlevel_FreeBSD_install_portupgrade() {
 
 ###
 
+lowlevel_FreeBSD_upgrade() {
+ lowlevel_FreeBSD_pkgpath
+ echo pkg_add -rvF "$@"
+ ### TODO: May not work??
+}
+
+###
+
 lowlevel_DragonFly_fullupgrade() {
  ### TODO: Upgrade the base-system, too
  df_warn The base-system upgrade is currently not implemented 
@@ -327,6 +335,15 @@ df_uninstall() {
   df_trans_log " "Uninstall: "$pkg"
  done
  lowlevel_${df_platform}_uninstall "$@" >> "$df_trans_file"
+ df_commit_reminder
+}
+
+df_upgrade() {
+ df_trans_log_date
+ for pkg in "$@"; do
+  df_trans_log " "Upgrade: "$pkg"
+ done
+ lowlevel_{$df_platform}_upgrade "$@" >> "$df_trans_file"
  df_commit_reminder
 }
 
@@ -466,6 +483,8 @@ df_tid_file="$df_trans_dir"/next.tid
 df_tid_init
 df_tid="`df_get_tid`"
 
+###
+
 case "$1" in
  add|install)
   shift
@@ -483,8 +502,8 @@ case "$1" in
    df_fullupgrade 
   else
    shift
-   df_upgrade "$@" ### TODO
-  fi;
+   df_upgrade "$@"
+  fi
   exit
   ;;
  update-now|upgrade-now)
@@ -492,7 +511,7 @@ case "$1" in
    df_fullupgrade 
   else
    shift
-   df_upgrade "$@" ### TODO
+   df_upgrade "$@"
   fi
   df_commit
   exit
