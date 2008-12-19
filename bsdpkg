@@ -485,105 +485,107 @@ df_tid="`df_get_tid`"
 
 ###
 
-case "$1" in
- add|install)
-  shift
-  df_install "$@"
-  exit
-  ;;
- add-now|install-now)
-  shift
-  df_install "$@"
-  df_commit
-  exit
-  ;;
- update|upgrade)
-  if [ $# -eq 1 ]; then
-   df_fullupgrade 
-  else
+while true; do
+ case "$1" in
+  add|install)
    shift
-   df_upgrade "$@"
-  fi
-  exit
-  ;;
- update-now|upgrade-now)
-  if [ $# -eq 1 ]; then
-   df_fullupgrade 
-  else
+   df_install "$@"
+   exit
+   ;;
+  add-now|install-now)
    shift
-   df_upgrade "$@"
-  fi
-  df_commit
-  exit
-  ;;
- remove|erase|delete|uninstall)
-  shift
-  df_uninstall "$@"
-  exit
-  ;;
- remove-now|erase-now|delete-now|uninstall-now)
-  shift
-  df_uninstall "$@"
-  df_commit
-  exit
-  ;;
- commit|run|execute|commit-now|run-now|execute-now)
-  df_commit
-  exit
-  ;; 
- cancel|cancel-now)
-  df_cancel
-  exit
-  ;;
- log|show-log|history|show-history)
-  cat "$df_log_file"
-  exit
-  ;;
- trans|transaction|show-trans|show-transaction)
-  ### TODO MUNDO VEM CA
-  if test "$2" == "" ; then
-   df_info Intent log of transaction ${df_tid} follows:
-   cat "$df_trans_log_file"
-  else
-   df_info Intent log of transaction "$2" follows:
-   cat "$df_trans_dir"/"$2.log"
-  fi
-  exit
-  ;;
- help|--help|-?|get-help)
-  echo              "$0" $df_ver usage:
-  echo      
-  echo To upgrade the system:
-  echo " ""$0" upgrade
-  echo To install packages and their dependencies:
-  echo " ""$0" install PACKAGE1 PACKAGE2 ...
-  echo To uninstall packages, their no-longer-needed dependencies \(where 
-  echo "    "supported\), and packages that depend on them:
-  echo " ""$0" uninstall PACKAGE1 PACKAGE2 ...
-  echo
-  echo NOTE: You have to actually run the transaction for the operations to 
-  echo "    "be done:
-  echo " ""$0" commit
-  echo NOTE: To cancel a transaction:
-  echo " ""$0" cancel
-  echo To show the intents of the current transaction:
-  echo " ""$0" show-trans
-  echo
-  echo For immediate operations you can use the -now version of commands:
-  echo " ""$0" install-now PACKAGE1 PACKAGE2 ...
-  echo
-  exit
-  ;;
- platf|platform|get-platform)
-  #echo Platform: "$df_platform"
-  echo "$df_platform"
-  exit
-  ;;
- version|--version|get-version)
-  echo $df_ver
-  exit
-  ;;
-esac
+   df_install "$@"
+   df_commit
+   exit
+   ;;
+  update|upgrade)
+   if [ $# -eq 1 ]; then
+    df_fullupgrade 
+   else
+    shift
+    df_upgrade "$@"
+   fi
+   exit
+   ;;
+  update-now|upgrade-now)
+   if [ $# -eq 1 ]; then
+    df_fullupgrade 
+   else
+    shift
+    df_upgrade "$@"
+   fi
+   df_commit
+   exit
+   ;;
+  remove|erase|delete|uninstall)
+   shift
+   df_uninstall "$@"
+   exit
+   ;;
+  remove-now|erase-now|delete-now|uninstall-now)
+   shift
+   df_uninstall "$@"
+   df_commit
+   exit
+   ;;
+  commit|run|execute|commit-now|run-now|execute-now)
+   df_commit
+   exit
+   ;; 
+  cancel|cancel-now)
+   df_cancel
+   exit
+   ;;
+  log|show-log|history|show-history)
+   cat "$df_log_file"
+   exit
+   ;;
+  trans|transaction|show-trans|show-transaction)
+   ### TODO?
+   if test "$2" == "" ; then
+    df_info Intent log of transaction ${df_tid} follows:
+    cat "$df_trans_log_file"
+   else
+    df_info Intent log of transaction "$2" follows:
+    cat "$df_trans_dir"/"$2.log"
+   fi
+   exit
+   ;;
+  help|--help|-?|get-help)
+   echo              "$0" $df_ver usage:
+   echo      
+   echo To upgrade the system:
+   echo " ""$0" upgrade
+   echo To install packages and their dependencies:
+   echo " ""$0" install PACKAGE1 PACKAGE2 ...
+   echo To uninstall packages, their no-longer-needed dependencies \(where 
+   echo "    "supported\), and packages that depend on them:
+   echo " ""$0" uninstall PACKAGE1 PACKAGE2 ...
+   echo
+   echo NOTE: You have to actually run the transaction for the operations to 
+   echo "    "be done:
+   echo " ""$0" commit
+   echo NOTE: To cancel a transaction:
+   echo " ""$0" cancel
+   echo To show the intents of the current transaction:
+   echo " ""$0" show-trans
+   echo
+   echo For immediate operations you can use the -now version of commands:
+   echo " ""$0" install-now PACKAGE1 PACKAGE2 ...
+   echo
+   exit
+   ;;
+  platf|platform|get-platform)
+   #echo Platform: "$df_platform"
+   echo "$df_platform"
+   exit
+   ;;
+  version|--version|get-version)
+   echo $df_ver
+   exit
+   ;;
+ esac
+done
 
 df_warn Unknown command "$1"
 exit 1
