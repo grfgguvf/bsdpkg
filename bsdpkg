@@ -276,7 +276,8 @@ lowlevel_FreeBSD_fullupgrade() {
  echo portsnap -I fetch update
  lowlevel_FreeBSD_pkgpath
  lowlevel_FreeBSD_install_portupgrade ### TODO: Maybe portupgrade
-  ### is not the best option
+  ### is not the best option, but portmaster and portmanager
+  ### don't seem to support use of packages
  echo pkgdb -Fa
  echo portupgrade -aPPR --batch
  echo pkgdb -Fa
