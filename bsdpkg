@@ -143,7 +143,7 @@ df_ver_upgrade() {
   return 0
  elif test $2 -eq 51; then
   if test -f "$df_run_dir"/dfpkg/done:portsnap_extract; then
-   mkdir -p "$df_db_dir"
+   df_db_dir_init
    mv "$df_run_dir"/dfpkg/done:portsnap_extract "$df_db_dir"
   fi
   return 0
@@ -317,9 +317,20 @@ lowlevel_zyp_fullupgrade() {
 ###
 
 df_commit_reminder() {
- df_info Operation\(s\) added to transaction $df_tid, to run it execute:
- df_info " ""$0" commit
+ if test ! -f "$df_hide_commit_reminder"; then
+  df_info Operation\(s\) added to transaction $df_tid, to run it execute:
+  df_info " ""$0" commit
+  df_info NOTE: To hide this reminder in the future, run:
+  df_info " ""$0" hide-commit-reminder
+ fi
 }
+
+df_hide_commit_reminder() {
+ touch "$df_hide_commit_reminder_file"
+ df_info Hidden
+}
+
+###
 
 df_install() {
  df_trans_log_date
@@ -478,6 +489,8 @@ df_ver_handler
 df_log_file="$df_log_dir"/bsdpkg.log
 df_log_init
 
+df_hide_commit_reminder_file="$df_db_dir"/hide:commit_reminder
+
 df_trans_dir="$df_db_dir"/trans/
 
 df_trans_file="$df_trans_dir"/next.trans
@@ -567,6 +580,10 @@ while true; do
    echo For immediate operations you can use the -now option:
    echo " ""$0" -now install PACKAGE1 [PACKAGE2 ...]
    echo
+   exit
+   ;;
+  hide-commit-reminder)
+   df_hide_commit_reminder
    exit
    ;;
   platf|platform|get-platform)
