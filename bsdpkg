@@ -261,6 +261,10 @@ lowlevel_FreeBSD_upgrade() {
  echo pkg_add -rvF "$@" ### TODO: May not work??
 }
 
+lowlevel_yum_upgrade() {
+ echo yum -y install "$@"
+}
+
 ###
 
 lowlevel_DragonFly_fullupgrade() {
