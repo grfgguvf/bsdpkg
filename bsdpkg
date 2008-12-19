@@ -13,7 +13,7 @@
 ### Anticipated-to-be-distribution-customized variables:
 df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
-### 
+###
 
 df_ver=52 ### This is bsdpkg's version, not that of DragonFly
 
