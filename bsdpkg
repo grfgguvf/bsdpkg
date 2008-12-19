@@ -10,9 +10,6 @@
 ### Please test, mainly on DragonFly and other BSDs. It's supposed to be
 ### portable to any UNIX.
 
-### TODO: test -f instead of test -e?! Is it in POSIX?
-### TODO: test instead of [
-
 ### Anticipated-to-be-distribution-customized variables:
 df_log_dir=/var/log/ #DEFAULT#
 df_run_dir=/var/db/ #DEFAULT#
@@ -40,14 +37,14 @@ df_get_platform() {
   Linux|Hurd|FreeBSD|SunOS)
       ### Always remember that things like Debian/kFreeBSD 
       ### or Nexenta exist
-   if [ -e /etc/fedora-release ]; then
+   if test -f /etc/fedora-release; then
     platf=yum
-   elif [ -e /etc/debian-version -o -e /etc/debian.version -o \
-       -e /etc/debian_version -o -e /etc/debian-release -o \
-       -e /etc/debian_release ]; then
+   elif test -f /etc/debian-version -o -f /etc/debian.version -o \
+       -f /etc/debian_version -o -f /etc/debian-release -o \
+       -f /etc/debian_release; then
     ### This might supposedly fail on >=Etch installations
     platf=Debian
-   elif test -e /etc/SUSE-release -o -e /etc/SuSE-release; then
+   elif test -f /etc/SUSE-release -o -f /etc/SuSE-release; then
     platf=zyp
    fi
    ;;
@@ -67,7 +64,7 @@ df_db_dir_init() {
 ###
 
 df_log_init() {
- if [ ! -e "$df_log_file" ]; then
+ if test ! -f "$df_log_file"; then
   touch "$df_log_file"
   df_info Creating log file "$df_log_file"
  fi
@@ -89,7 +86,7 @@ df_log_date() {
 ###
 
 df_trans_log_init() {
- if [ ! -e "$df_trans_log_file" ]; then
+ if test ! -f "$df_trans_log_file"; then
   touch "$df_trans_log_file"
  fi
 }
@@ -123,7 +120,7 @@ df_ver_file_update() {
 }
 
 df_ver_file_init() {
- if test ! -e "$df_ver_file"; then
+ if test ! -f "$df_ver_file"; then
   df_ver_file_update
   df_info Creating file "$df_ver_file"
  fi
@@ -245,7 +242,7 @@ lowlevel_zyp_uninstall() {
 ###
 
 lowlevel_FreeBSD_portsnap_extract() {
- printf 'if [ ! -e '"$df_db_dir"'/done:portsnap_extract ]; then '
+ printf 'if test ! -f '"$df_db_dir"'/done:portsnap_extract; then '
  printf  'portsnap fetch extract; '
  printf  'touch '"$df_db_dir"'/done:portsnap_extract; '
  printf 'fi\n'
@@ -364,7 +361,7 @@ df_trans_dir_init() {
 
 df_tid_init() {
  df_trans_dir_init
- if [ ! -e "$df_tid_file" ]; then
+ if test ! -f "$df_tid_file"; then
   echo 1 > "$df_tid_file"
  fi
 }
@@ -382,7 +379,7 @@ df_new_tid() {
 
 df_trans_init() {
  df_trans_dir_init
- if [ ! -e "$df_trans_file" ]; then
+ if test ! -f "$df_trans_file"; then
   touch "$df_trans_file"
  fi
 }
@@ -426,7 +423,7 @@ df_commit() {
  df_log Beginning: Transaction $df_tid
  df_trans_prepare
  sh -ex "$df_trans_file"
- if [ $? -ne 0 ]; then
+ if test $? -ne 0; then
   df_warn Part\(s\) of transaction $df_tid failed. Intent log follows:
   cat "$df_trans_log_file"
   df_log Failed: Transaction $df_tid
@@ -507,7 +504,7 @@ while true; do
    ;;
   update|upgrade)
    df_warn DEBUG: argc=$# ### TODO
-   if [ $# -eq 1 ]; then
+   if test $# -eq 1; then
     df_fullupgrade 
    else
     shift
