@@ -317,7 +317,7 @@ lowlevel_zyp_fullupgrade() {
 ###
 
 df_commit_reminder() {
- if test ! -f "$df_hide_commit_reminder"; then
+ if test ! -f "$df_hide_commit_reminder_file"; then
   df_info Operation\(s\) added to transaction $df_tid, to run it execute:
   df_info " ""$0" commit
   df_info NOTE: To hide this reminder in the future, run:
