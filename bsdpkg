@@ -340,7 +340,7 @@ df_upgrade() {
  for pkg in "$@"; do
   df_trans_log " "Upgrade: "$pkg"
  done
- lowlevel_{$df_platform}_upgrade "$@" >> "$df_trans_file"
+ lowlevel_${df_platform}_upgrade "$@" >> "$df_trans_file"
  df_commit_reminder
 }
 
