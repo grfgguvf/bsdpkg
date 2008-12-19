@@ -331,7 +331,7 @@ df_commit_reminder() {
 }
 
 df_hide_commit_reminder() {
- if test ! -f "$df_commit_reminder_file"; then
+ if test ! -f "$df_hide_commit_reminder_file"; then
   touch "$df_hide_commit_reminder_file"
   df_info Hidden
  else
